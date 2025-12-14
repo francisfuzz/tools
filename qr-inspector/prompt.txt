@@ -1,0 +1,37 @@
+Create "QR Inspector" - a single-file QR code scanner (index.html) with inline CSS/JS. No frameworks.
+
+Core Features:
+- Real-time camera QR scanning with start/stop controls
+- URL safety analysis: HTTPS check, phishing indicators, URL shorteners, suspicious TLDs
+- Full URL metadata display: protocol, domain, path, query params
+- Scan history with localStorage (offline-first, persists across sessions)
+- Copy to clipboard, clear history, confirm before opening links
+
+Enhanced Features:
+- Duplicate scan detection with notification
+- Manual URL input for analysis without camera
+- Search/filter history
+- Export/import history as JSON
+- Visual feedback on successful scan
+- Delete individual history items
+- Scan statistics dashboard
+- Dark mode (system preference detection)
+
+Security Checks:
+- Homograph attack detection
+- Base64-encoded URLs flagging
+- IP address vs domain identification
+- Tracking parameter identification
+
+UX Requirements:
+- Mobile-responsive
+- Keyboard navigation + ARIA labels
+- Error handling for camera permission denial
+- Loading states
+- iOS Safari + Android Chrome compatible
+
+Technical:
+- Single HTML file, inline CSS/JS only
+- Use native APIs (no external dependencies except QR library)
+- PWA-ready (add manifest for "Add to Home Screen")
+- Efficient scanning (pause when not in view to save battery)

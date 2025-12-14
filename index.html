@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="QR Inspector - Real-time QR code scanner with URL safety analysis">
+    <title>QR Inspector</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUVIgSW5zcGVjdG9yIiwic2hvcnRfbmFtZSI6IlFSIEluc3BlY3RvciIsImRlc2NyaXB0aW9uIjoiUVIgY29kZSBzY2FubmVyIHdpdGggVVJMIHNhZmV0eSBhbmFseXNpcyIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjMjU2M2ViIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5Micgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSdub25lJyBzdHJva2U9JyUyMzI1NjNlYicgc3Ryb2tlLXdpZHRoPScyJyUzRSUzQ3JlY3QgeD0nMycgeT0nMycgd2lkdGg9JzcnIGhlaWdodD0nNycvJTNFJTNDcmVjdCB4PScxNCcgeT0nMycgd2lkdGg9JzcnIGhlaWdodD0nNycvJTNFJTNDcmVjdCB4PSczJyB5PScxNCcgd2lkdGg9JzcnIGhlaWdodD0nNycvJTNFJTNDL3N2ZyUzRSIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-tertiary: #e5e7eb;
+            --text: #111827;
+            --text-secondary: #6b7280;
+            --border: #d1d5db;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --overlay: rgba(0, 0, 0, 0.5);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #3b82f6;
+                --primary-dark: #2563eb;
+                --success: #34d399;
+                --warning: #fbbf24;
+                --danger: #f87171;
+                --bg: #111827;
+                --bg-secondary: #1f2937;
+                --bg-tertiary: #374151;
+                --text: #f9fafb;
+                --text-secondary: #9ca3af;
+                --border: #4b5563;
+                --shadow: rgba(0, 0, 0, 0.3);
+                --overlay: rgba(0, 0, 0, 0.7);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 1.5rem 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+            aspect-ratio: 1;
+            max-height: 400px;
+        }
+
+        #reader video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--primary);
+            color: white;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text);
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+            background: var(--bg);
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            background: var(--bg);
+            border: 2px solid var(--border);
+        }
+
+        .result.success {
+            border-color: var(--success);
+            background: color-mix(in srgb, var(--success) 10%, var(--bg));
+        }
+
+        .result.warning {
+            border-color: var(--warning);
+            background: color-mix(in srgb, var(--warning) 10%, var(--bg));
+        }
+
+        .result.danger {
+            border-color: var(--danger);
+            background: color-mix(in srgb, var(--danger) 10%, var(--bg));
+        }
+
+        .url-display {
+            word-break: break-all;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .metadata {
+            display: grid;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .metadata-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 100px;
+        }
+
+        .metadata-value {
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        .security-checks {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .check-item.pass {
+            background: color-mix(in srgb, var(--success) 15%, var(--bg));
+            color: var(--success);
+        }
+
+        .check-item.fail {
+            background: color-mix(in srgb, var(--danger) 15%, var(--bg));
+            color: var(--danger);
+        }
+
+        .check-item.warning {
+            background: color-mix(in srgb, var(--warning) 15%, var(--bg));
+            color: var(--warning);
+        }
+
+        .check-icon {
+            font-size: 1.1rem;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .history-controls input {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
+        }
+
+        .history-controls button {
+            flex: 0;
+            min-width: auto;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .history-item {
+            padding: 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 4px 8px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+            gap: 0.5rem;
+        }
+
+        .history-url {
+            word-break: break-all;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .history-timestamp {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .history-actions button {
+            flex: 1;
+            min-width: auto;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 16px var(--shadow);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 90%;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .notification.warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .notification.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: transparent;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .notification {
+                left: 1rem;
+                right: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+        }
+
+        /* Accessibility */
+        :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QR Inspector</h1>
+            <p class="subtitle">Scan QR codes with real-time URL safety analysis</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="scanner" aria-label="Scanner tab">Scanner</button>
+            <button class="tab" data-tab="manual" aria-label="Manual input tab">Manual Input</button>
+            <button class="tab" data-tab="history" aria-label="History tab">History</button>
+            <button class="tab" data-tab="stats" aria-label="Statistics tab">Stats</button>
+        </div>
+
+        <!-- Scanner Tab -->
+        <div id="scanner-tab" class="tab-content active">
+            <div class="section">
+                <h2>Camera Scanner</h2>
+                <div id="reader"></div>
+                <div class="controls">
+                    <button id="start-btn" aria-label="Start scanning">Start Scanning</button>
+                    <button id="stop-btn" class="secondary" disabled aria-label="Stop scanning">Stop Scanning</button>
+                </div>
+            </div>
+
+            <div id="result-section" class="section hidden">
+                <h2>Scan Result</h2>
+                <div id="result-content"></div>
+            </div>
+        </div>
+
+        <!-- Manual Input Tab -->
+        <div id="manual-tab" class="tab-content">
+            <div class="section">
+                <h2>Manual URL Analysis</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Enter a URL to analyze without scanning
+                </p>
+                <input
+                    type="text"
+                    id="manual-input"
+                    placeholder="https://example.com"
+                    aria-label="Enter URL for analysis"
+                >
+                <button id="analyze-btn" aria-label="Analyze URL">Analyze URL</button>
+            </div>
+
+            <div id="manual-result-section" class="section hidden">
+                <h2>Analysis Result</h2>
+                <div id="manual-result-content"></div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content">
+            <div class="section">
+                <h2>Scan History</h2>
+                <div class="history-controls">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search history..."
+                        aria-label="Search history"
+                    >
+                    <button id="export-btn" class="secondary" aria-label="Export history">Export</button>
+                    <button id="import-btn" class="secondary" aria-label="Import history">Import</button>
+                    <button id="clear-history-btn" class="danger" aria-label="Clear history">Clear All</button>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats-tab" class="tab-content">
+            <div class="section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-scans">0</div>
+                        <div class="stat-label">Total Scans</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="unique-domains">0</div>
+                        <div class="stat-label">Unique Domains</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="secure-urls">0</div>
+                        <div class="stat-label">HTTPS URLs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="flagged-urls">0</div>
+                        <div class="stat-label">Flagged URLs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" id="import-file" accept=".json" class="hidden" aria-label="Import file">
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        // QR Scanner Application
+        class QRInspector {
+            constructor() {
+                this.scanner = null;
+                this.isScanning = false;
+                this.history = this.loadHistory();
+                this.lastScannedCode = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.renderHistory();
+                this.updateStats();
+                this.setupVisibilityChange();
+            }
+
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+                });
+
+                // Scanner controls
+                document.getElementById('start-btn').addEventListener('click', () => this.startScanning());
+                document.getElementById('stop-btn').addEventListener('click', () => this.stopScanning());
+
+                // Manual input
+                document.getElementById('analyze-btn').addEventListener('click', () => this.analyzeManualInput());
+                document.getElementById('manual-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.analyzeManualInput();
+                });
+
+                // History controls
+                document.getElementById('search-input').addEventListener('input', (e) => this.filterHistory(e.target.value));
+                document.getElementById('clear-history-btn').addEventListener('click', () => this.clearHistory());
+                document.getElementById('export-btn').addEventListener('click', () => this.exportHistory());
+                document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+                document.getElementById('import-file').addEventListener('change', (e) => this.importHistory(e));
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isScanning) {
+                        this.stopScanning();
+                    }
+                });
+            }
+
+            switchTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.tab === tabName);
+                });
+
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === `${tabName}-tab`);
+                });
+
+                // Stop scanning when switching away from scanner tab
+                if (tabName !== 'scanner' && this.isScanning) {
+                    this.stopScanning();
+                }
+            }
+
+            async startScanning() {
+                try {
+                    if (!this.scanner) {
+                        this.scanner = new Html5Qrcode("reader");
+                    }
+
+                    const config = {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    };
+
+                    await this.scanner.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText) => this.onScanSuccess(decodedText),
+                        (error) => {} // Ignore scan errors
+                    );
+
+                    this.isScanning = true;
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('stop-btn').disabled = false;
+                } catch (err) {
+                    this.showNotification(`Camera error: ${err.message}`, 'danger');
+                }
+            }
+
+            async stopScanning() {
+                if (this.scanner && this.isScanning) {
+                    await this.scanner.stop();
+                    this.isScanning = false;
+                    document.getElementById('start-btn').disabled = false;
+                    document.getElementById('stop-btn').disabled = true;
+                }
+            }
+
+            onScanSuccess(decodedText) {
+                // Check for duplicate
+                if (this.lastScannedCode === decodedText) {
+                    this.showNotification('Duplicate scan detected', 'warning');
+                    return;
+                }
+
+                this.lastScannedCode = decodedText;
+                this.processUrl(decodedText, 'result-section', 'result-content');
+                this.saveToHistory(decodedText);
+                this.showNotification('QR code scanned successfully!', 'success');
+
+                // Auto-stop after successful scan
+                this.stopScanning();
+            }
+
+            analyzeManualInput() {
+                const input = document.getElementById('manual-input').value.trim();
+                if (!input) {
+                    this.showNotification('Please enter a URL', 'warning');
+                    return;
+                }
+
+                this.processUrl(input, 'manual-result-section', 'manual-result-content');
+                this.saveToHistory(input);
+            }
+
+            processUrl(url, sectionId, contentId) {
+                const analysis = this.analyzeUrl(url);
+                const section = document.getElementById(sectionId);
+                const content = document.getElementById(contentId);
+
+                section.classList.remove('hidden');
+                content.innerHTML = this.renderAnalysis(url, analysis);
+
+                // Scroll to result
+                section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            analyzeUrl(url) {
+                const analysis = {
+                    isValid: false,
+                    protocol: '',
+                    domain: '',
+                    path: '',
+                    queryParams: {},
+                    isHttps: false,
+                    isIpAddress: false,
+                    hasBase64: false,
+                    hasHomograph: false,
+                    isShortener: false,
+                    suspiciousTld: false,
+                    hasTrackingParams: false,
+                    riskLevel: 'safe'
+                };
+
+                try {
+                    // Try to parse as URL
+                    let urlObj;
+                    try {
+                        urlObj = new URL(url);
+                    } catch {
+                        // If not a valid URL, try adding protocol
+                        urlObj = new URL('http://' + url);
+                    }
+
+                    analysis.isValid = true;
+                    analysis.protocol = urlObj.protocol.replace(':', '');
+                    analysis.domain = urlObj.hostname;
+                    analysis.path = urlObj.pathname;
+                    analysis.isHttps = urlObj.protocol === 'https:';
+
+                    // Parse query parameters
+                    urlObj.searchParams.forEach((value, key) => {
+                        analysis.queryParams[key] = value;
+                    });
+
+                    // Security checks
+                    analysis.isIpAddress = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(analysis.domain);
+                    analysis.hasBase64 = /base64|atob|btoa/i.test(url);
+                    analysis.hasHomograph = this.detectHomograph(analysis.domain);
+                    analysis.isShortener = this.isUrlShortener(analysis.domain);
+                    analysis.suspiciousTld = this.hasSuspiciousTld(analysis.domain);
+                    analysis.hasTrackingParams = this.hasTrackingParameters(analysis.queryParams);
+
+                    // Calculate risk level
+                    let riskScore = 0;
+                    if (!analysis.isHttps) riskScore += 2;
+                    if (analysis.hasHomograph) riskScore += 3;
+                    if (analysis.hasBase64) riskScore += 2;
+                    if (analysis.isShortener) riskScore += 1;
+                    if (analysis.suspiciousTld) riskScore += 2;
+                    if (analysis.isIpAddress) riskScore += 1;
+
+                    if (riskScore >= 4) {
+                        analysis.riskLevel = 'danger';
+                    } else if (riskScore >= 2) {
+                        analysis.riskLevel = 'warning';
+                    } else {
+                        analysis.riskLevel = 'success';
+                    }
+
+                } catch (err) {
+                    analysis.isValid = false;
+                }
+
+                return analysis;
+            }
+
+            detectHomograph(domain) {
+                // Check for non-ASCII characters that look like ASCII
+                const suspiciousChars = /[а-яА-ЯіїєґІЇЄҐ]/; // Cyrillic that looks like Latin
+                return suspiciousChars.test(domain);
+            }
+
+            isUrlShortener(domain) {
+                const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly', 'short.link', 'tiny.cc'];
+                return shorteners.some(shortener => domain.includes(shortener));
+            }
+
+            hasSuspiciousTld(domain) {
+                const suspiciousTlds = ['.tk', '.ml', '.ga', '.cf', '.gq', '.zip', '.work', '.click'];
+                return suspiciousTlds.some(tld => domain.endsWith(tld));
+            }
+
+            hasTrackingParameters(params) {
+                const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid', 'ref', 'source'];
+                return Object.keys(params).some(key => trackingParams.includes(key.toLowerCase()));
+            }
+
+            renderAnalysis(url, analysis) {
+                if (!analysis.isValid) {
+                    return `
+                        <div class="result danger">
+                            <h3>Invalid URL</h3>
+                            <p>The scanned text is not a valid URL.</p>
+                            <div class="url-display">${this.escapeHtml(url)}</div>
+                            <button onclick="app.copyToClipboard('${this.escapeHtml(url).replace(/'/g, "\\'")}')">Copy Text</button>
+                        </div>
+                    `;
+                }
+
+                const securityChecks = [
+                    {
+                        label: 'HTTPS Protocol',
+                        status: analysis.isHttps ? 'pass' : 'fail',
+                        message: analysis.isHttps ? 'Secure connection' : 'Insecure HTTP connection'
+                    },
+                    {
+                        label: 'Domain Type',
+                        status: analysis.isIpAddress ? 'warning' : 'pass',
+                        message: analysis.isIpAddress ? 'IP address detected' : 'Domain name'
+                    },
+                    {
+                        label: 'Homograph Attack',
+                        status: analysis.hasHomograph ? 'fail' : 'pass',
+                        message: analysis.hasHomograph ? 'Suspicious characters detected' : 'No homograph detected'
+                    },
+                    {
+                        label: 'URL Shortener',
+                        status: analysis.isShortener ? 'warning' : 'pass',
+                        message: analysis.isShortener ? 'URL shortener detected' : 'Direct URL'
+                    },
+                    {
+                        label: 'Base64 Encoding',
+                        status: analysis.hasBase64 ? 'warning' : 'pass',
+                        message: analysis.hasBase64 ? 'Base64 encoding detected' : 'No encoding detected'
+                    },
+                    {
+                        label: 'TLD Check',
+                        status: analysis.suspiciousTld ? 'warning' : 'pass',
+                        message: analysis.suspiciousTld ? 'Suspicious TLD' : 'Common TLD'
+                    },
+                    {
+                        label: 'Tracking Parameters',
+                        status: analysis.hasTrackingParams ? 'warning' : 'pass',
+                        message: analysis.hasTrackingParams ? 'Tracking parameters found' : 'No tracking detected'
+                    }
+                ];
+
+                const icons = {
+                    pass: '✓',
+                    fail: '✗',
+                    warning: '⚠'
+                };
+
+                return `
+                    <div class="result ${analysis.riskLevel}">
+                        <h3>URL Analysis</h3>
+                        <div class="url-display">${this.escapeHtml(url)}</div>
+
+                        <h3>Metadata</h3>
+                        <div class="metadata">
+                            <div class="metadata-item">
+                                <span class="metadata-label">Protocol:</span>
+                                <span class="metadata-value">${analysis.protocol}</span>
+                            </div>
+                            <div class="metadata-item">
+                                <span class="metadata-label">Domain:</span>
+                                <span class="metadata-value">${this.escapeHtml(analysis.domain)}</span>
+                            </div>
+                            <div class="metadata-item">
+                                <span class="metadata-label">Path:</span>
+                                <span class="metadata-value">${this.escapeHtml(analysis.path)}</span>
+                            </div>
+                            ${Object.keys(analysis.queryParams).length > 0 ? `
+                                <div class="metadata-item">
+                                    <span class="metadata-label">Query Params:</span>
+                                    <span class="metadata-value">${this.escapeHtml(JSON.stringify(analysis.queryParams, null, 2))}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <h3>Security Checks</h3>
+                        <div class="security-checks">
+                            ${securityChecks.map(check => `
+                                <div class="check-item ${check.status}">
+                                    <span class="check-icon">${icons[check.status]}</span>
+                                    <strong>${check.label}:</strong> ${check.message}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="controls">
+                            <button onclick="app.copyToClipboard('${this.escapeHtml(url).replace(/'/g, "\\'")}')">Copy URL</button>
+                            <button class="secondary" onclick="app.openUrl('${this.escapeHtml(url).replace(/'/g, "\\'")}')">Open URL</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            saveToHistory(url) {
+                const entry = {
+                    id: Date.now(),
+                    url: url,
+                    timestamp: new Date().toISOString(),
+                    analysis: this.analyzeUrl(url)
+                };
+
+                this.history.unshift(entry);
+                localStorage.setItem('qr-history', JSON.stringify(this.history));
+                this.renderHistory();
+                this.updateStats();
+            }
+
+            loadHistory() {
+                const stored = localStorage.getItem('qr-history');
+                return stored ? JSON.parse(stored) : [];
+            }
+
+            renderHistory(filter = '') {
+                const historyList = document.getElementById('history-list');
+                const filtered = filter
+                    ? this.history.filter(entry => entry.url.toLowerCase().includes(filter.toLowerCase()))
+                    : this.history;
+
+                if (filtered.length === 0) {
+                    historyList.innerHTML = '<div class="empty-state">No scan history yet</div>';
+                    return;
+                }
+
+                historyList.innerHTML = filtered.map(entry => {
+                    const date = new Date(entry.timestamp);
+                    const timeAgo = this.getTimeAgo(date);
+
+                    return `
+                        <div class="history-item">
+                            <div class="history-header">
+                                <div class="history-url">${this.escapeHtml(entry.url)}</div>
+                                <div class="history-timestamp">${timeAgo}</div>
+                            </div>
+                            <div class="history-actions">
+                                <button class="secondary" onclick="app.viewHistoryItem(${entry.id})">View Details</button>
+                                <button class="secondary" onclick="app.copyToClipboard('${this.escapeHtml(entry.url).replace(/'/g, "\\'")}')">Copy</button>
+                                <button class="danger" onclick="app.deleteHistoryItem(${entry.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            viewHistoryItem(id) {
+                const entry = this.history.find(e => e.id === id);
+                if (!entry) return;
+
+                this.switchTab('manual');
+                document.getElementById('manual-input').value = entry.url;
+                this.processUrl(entry.url, 'manual-result-section', 'manual-result-content');
+            }
+
+            deleteHistoryItem(id) {
+                if (!confirm('Delete this item from history?')) return;
+
+                this.history = this.history.filter(e => e.id !== id);
+                localStorage.setItem('qr-history', JSON.stringify(this.history));
+                this.renderHistory();
+                this.updateStats();
+                this.showNotification('Item deleted', 'success');
+            }
+
+            filterHistory(searchTerm) {
+                this.renderHistory(searchTerm);
+            }
+
+            clearHistory() {
+                if (!confirm('Clear all scan history? This cannot be undone.')) return;
+
+                this.history = [];
+                localStorage.setItem('qr-history', JSON.stringify(this.history));
+                this.renderHistory();
+                this.updateStats();
+                this.showNotification('History cleared', 'success');
+            }
+
+            exportHistory() {
+                const data = JSON.stringify(this.history, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `qr-history-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.showNotification('History exported', 'success');
+            }
+
+            importHistory(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (!Array.isArray(imported)) throw new Error('Invalid format');
+
+                        if (confirm(`Import ${imported.length} items? This will merge with existing history.`)) {
+                            this.history = [...imported, ...this.history];
+                            localStorage.setItem('qr-history', JSON.stringify(this.history));
+                            this.renderHistory();
+                            this.updateStats();
+                            this.showNotification('History imported', 'success');
+                        }
+                    } catch (err) {
+                        this.showNotification('Import failed: Invalid file format', 'danger');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            }
+
+            updateStats() {
+                const totalScans = this.history.length;
+                const uniqueDomains = new Set(
+                    this.history
+                        .filter(e => e.analysis.isValid)
+                        .map(e => e.analysis.domain)
+                ).size;
+                const secureUrls = this.history.filter(e => e.analysis.isHttps).length;
+                const flaggedUrls = this.history.filter(e =>
+                    e.analysis.riskLevel === 'danger' || e.analysis.riskLevel === 'warning'
+                ).length;
+
+                document.getElementById('total-scans').textContent = totalScans;
+                document.getElementById('unique-domains').textContent = uniqueDomains;
+                document.getElementById('secure-urls').textContent = secureUrls;
+                document.getElementById('flagged-urls').textContent = flaggedUrls;
+            }
+
+            copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showNotification('Copied to clipboard!', 'success');
+                }).catch(() => {
+                    this.showNotification('Failed to copy', 'danger');
+                });
+            }
+
+            openUrl(url) {
+                if (confirm('Open this URL in a new tab?\n\n' + url)) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                }
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                notification.setAttribute('role', 'alert');
+                notification.setAttribute('aria-live', 'polite');
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            setupVisibilityChange() {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && this.isScanning) {
+                        this.stopScanning();
+                    }
+                });
+            }
+
+            getTimeAgo(date) {
+                const seconds = Math.floor((new Date() - date) / 1000);
+
+                const intervals = {
+                    year: 31536000,
+                    month: 2592000,
+                    week: 604800,
+                    day: 86400,
+                    hour: 3600,
+                    minute: 60
+                };
+
+                for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+                    const interval = Math.floor(seconds / secondsInUnit);
+                    if (interval >= 1) {
+                        return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+                    }
+                }
+
+                return 'just now';
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize app
+        const app = new QRInspector();
+    </script>
+</body>
+</html>
